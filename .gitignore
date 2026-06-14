@@ -1,0 +1,30 @@
+# Guard against accidentally copying live home dotfiles into the repository root.
+/.zshrc
+/.zshrc.local
+/.p10k.zsh
+/.oh-my-zsh/
+/.tmux.conf
+/.tmux.conf.local
+/.tmux/
+
+# Local private environment files.
+/.env
+/.env.*
+!/.env.example
+/.envrc
+
+# Local runtime, caches, and temporary output.
+/.dotfiles-backup/
+/.cache/
+/tmux-*/
+/dist/
+/tmp/
+/.tmp/
+.DS_Store
+*.log
+*.swp
+*.swo
+*~
+*.zwc
+*.zwc.old
+.zcompdump*

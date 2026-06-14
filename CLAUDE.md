@@ -1,0 +1,16 @@
+# Claude Code Notes
+
+Follow the repository instructions in `AGENTS.md`.
+
+Important local constraints:
+
+- This is a local-only repository unless the user explicitly asks for GitHub or
+  another remote.
+- Keep the installer copy-based and offline-first.
+- `install.sh` runs `./verify.sh` before writing to the real home unless
+  `--skip-verify` is passed.
+- Default install must not create `~/.p10k.zsh`; let Powerlevel10k configure
+  itself per machine unless the user explicitly passes a p10k profile option.
+- Keep secrets and machine-specific values out of tracked files.
+- Use `zsh/.zshrc.local.example` for commented placeholders.
+- Run the verification commands from `AGENTS.md` before reporting completion.

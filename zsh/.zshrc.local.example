@@ -1,0 +1,85 @@
+# Local machine configuration for ~/.zshrc.local.
+#
+# Keep real machine paths, credentials, proxies, and private aliases here.
+# This example file is safe to commit because every value is a placeholder.
+
+# ---------------------------------------------------------------------------
+# Local binaries
+# ---------------------------------------------------------------------------
+
+# export PATH="$HOME/.local/bin:$PATH"
+# export PATH="$HOME/<private-bin-dir>:$PATH"
+
+# ---------------------------------------------------------------------------
+# Conda or Miniconda
+# ---------------------------------------------------------------------------
+
+# if [[ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]]; then
+#   source "$HOME/miniconda3/etc/profile.d/conda.sh"
+# fi
+
+# If conda lives somewhere else, use that local path here.
+# if [[ -f "/path/to/miniconda3/etc/profile.d/conda.sh" ]]; then
+#   source "/path/to/miniconda3/etc/profile.d/conda.sh"
+# fi
+
+# ---------------------------------------------------------------------------
+# CUDA
+# ---------------------------------------------------------------------------
+
+# export CUDA_VERSION="<cuda-version>"
+# export CUDA_PATH="/usr/local/cuda-${CUDA_VERSION}"
+# export PATH="$PATH:${CUDA_PATH}/bin"
+# export CPATH="$CPATH:${CUDA_PATH}/include"
+# export LIBRARY_PATH="$LIBRARY_PATH:${CUDA_PATH}/lib64"
+# export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${CUDA_PATH}/lib64"
+
+# ---------------------------------------------------------------------------
+# Node / NVM
+# ---------------------------------------------------------------------------
+
+# export NVM_DIR="$HOME/.nvm"
+# [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+# [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
+
+# ---------------------------------------------------------------------------
+# Mirrors and endpoints
+# ---------------------------------------------------------------------------
+
+# export HF_ENDPOINT="<huggingface-endpoint-url>"
+
+# ---------------------------------------------------------------------------
+# Secrets
+# ---------------------------------------------------------------------------
+
+# export HF_TOKEN="<huggingface-token>"
+# export OPENAI_API_KEY="<openai-api-key>"
+# export ANTHROPIC_API_KEY="<anthropic-api-key>"
+
+# ---------------------------------------------------------------------------
+# Proxy
+# ---------------------------------------------------------------------------
+
+# export HTTPS_PROXY="<proxy-url>"
+# export HTTP_PROXY="<proxy-url>"
+# export ALL_PROXY="<proxy-url>"
+
+# with_proxy() {
+#   HTTPS_PROXY="<proxy-url>" \
+#   HTTP_PROXY="<proxy-url>" \
+#   ALL_PROXY="<proxy-url>" \
+#   "$@"
+# }
+
+# ---------------------------------------------------------------------------
+# Tool-specific flags
+# ---------------------------------------------------------------------------
+
+# export ANTHROPIC_DISABLE_TELEMETRY=1
+# export CODEFUSE_CLAUDE_ENABLE_1M_CONTEXT=1
+
+# ---------------------------------------------------------------------------
+# Aliases
+# ---------------------------------------------------------------------------
+
+# alias c='clear'
