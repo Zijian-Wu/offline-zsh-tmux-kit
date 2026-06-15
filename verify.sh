@@ -24,7 +24,7 @@ check_required_commands() {
   local missing=0
   local command_name
 
-  for command_name in find git grep mktemp tmux zsh; do
+  for command_name in bash find git grep mktemp tmux zsh; do
     require_command "$command_name" || missing=1
   done
 
@@ -96,7 +96,7 @@ check_required_commands
 make_temp_dir tmux_tmpdir
 make_temp_dir test_home
 
-(umask 0002; HOME="$test_home" "$repo_root/install.sh" --yes --skip-verify >"$test_home/install.log")
+(umask 0002; HOME="$test_home" bash "$repo_root/install.sh" --yes --skip-verify >"$test_home/install.log")
 
 assert_file "$test_home/.zshrc"
 assert_file "$test_home/.zshrc.local"
@@ -137,12 +137,12 @@ fi
 
 make_temp_dir existing_p10k_home
 printf 'local p10k config\n' >"$existing_p10k_home/.p10k.zsh"
-HOME="$existing_p10k_home" "$repo_root/install.sh" --yes --skip-verify >"$existing_p10k_home/install.log"
+HOME="$existing_p10k_home" bash "$repo_root/install.sh" --yes --skip-verify >"$existing_p10k_home/install.log"
 grep -qx 'local p10k config' "$existing_p10k_home/.p10k.zsh" ||
   fail "default install should preserve an existing .p10k.zsh"
 
 make_temp_dir p10k_home
-HOME="$p10k_home" "$repo_root/install.sh" --yes --skip-verify --p10k-profile nerdfont >"$p10k_home/install.log"
+HOME="$p10k_home" bash "$repo_root/install.sh" --yes --skip-verify --p10k-profile nerdfont >"$p10k_home/install.log"
 assert_file "$p10k_home/.p10k.zsh"
 
 printf 'PASS: verify\n'
