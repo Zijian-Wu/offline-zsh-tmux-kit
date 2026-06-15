@@ -9,6 +9,8 @@ Important local constraints:
 - Keep the installer copy-based and offline-first.
 - `install.sh` runs `./verify.sh` before writing to the real home unless
   `--skip-verify` is passed.
+- Verification should cover the clone/copy install path and should not require
+  release-zip tooling unless the distribution model changes.
 - Default install must not create `~/.p10k.zsh`; let Powerlevel10k configure
   itself per machine unless the user explicitly passes a p10k profile option.
 - Keep secrets and machine-specific values out of tracked files.
