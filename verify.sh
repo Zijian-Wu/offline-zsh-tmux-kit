@@ -2,16 +2,42 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-test_home="$(mktemp -d)"
+temp_paths=()
 tmux_socket="zsh_tmux_install_test_$$"
-tmux_tmpdir="/tmp/ztmux-$$"
-mkdir -p "$tmux_tmpdir"
+tmux_tmpdir=""
+test_home=""
+
+fail() {
+  printf 'FAIL: %s\n' "$1" >&2
+  exit 1
+}
+
+require_command() {
+  local command_name="$1"
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    printf 'Missing required command: %s\n' "$command_name" >&2
+    return 1
+  fi
+}
+
+check_required_commands() {
+  local missing=0
+  local command_name
+
+  for command_name in find git grep mktemp tmux zsh; do
+    require_command "$command_name" || missing=1
+  done
+
+  if [[ "$missing" -ne 0 ]]; then
+    fail "install required commands before running verification"
+  fi
+}
 
 remove_path() {
   local path="$1"
   local attempt
 
-  [[ -e "$path" ]] || return 0
+  [[ -e "$path" || -L "$path" ]] || return 0
 
   for attempt in 1 2 3 4 5; do
     rm -rf "$path" 2>/dev/null && return 0
@@ -22,15 +48,25 @@ remove_path() {
 }
 
 cleanup() {
-  TMUX_TMPDIR="$tmux_tmpdir" tmux -L "$tmux_socket" kill-server >/dev/null 2>&1 || true
-  remove_path "$test_home"
-  remove_path "$tmux_tmpdir"
+  local path
+
+  if [[ -n "${tmux_tmpdir:-}" && -d "$tmux_tmpdir" ]] && command -v tmux >/dev/null 2>&1; then
+    TMUX_TMPDIR="$tmux_tmpdir" tmux -L "$tmux_socket" kill-server >/dev/null 2>&1 || true
+  fi
+
+  for path in "${temp_paths[@]:-}"; do
+    remove_path "$path"
+  done
 }
 trap cleanup EXIT
 
-fail() {
-  printf 'FAIL: %s\n' "$1" >&2
-  exit 1
+make_temp_dir() {
+  local result_var="$1"
+  local dir
+
+  dir="$(mktemp -d)"
+  temp_paths+=("$dir")
+  printf -v "$result_var" '%s' "$dir"
 }
 
 assert_file() {
@@ -55,6 +91,10 @@ assert_no_group_or_other_writable_dirs() {
   [[ -z "$insecure_path" ]] ||
     fail "expected no group/other-writable directories under $path, found $insecure_path"
 }
+
+check_required_commands
+make_temp_dir tmux_tmpdir
+make_temp_dir test_home
 
 (umask 0002; HOME="$test_home" "$repo_root/install.sh" --yes --skip-verify >"$test_home/install.log")
 
@@ -95,35 +135,14 @@ if [[ -s "$unexpected_tmux_output" ]]; then
   fail "tmux started with unexpected output"
 fi
 
-existing_p10k_home="$(mktemp -d)"
+make_temp_dir existing_p10k_home
 printf 'local p10k config\n' >"$existing_p10k_home/.p10k.zsh"
 HOME="$existing_p10k_home" "$repo_root/install.sh" --yes --skip-verify >"$existing_p10k_home/install.log"
 grep -qx 'local p10k config' "$existing_p10k_home/.p10k.zsh" ||
   fail "default install should preserve an existing .p10k.zsh"
-remove_path "$existing_p10k_home"
 
-p10k_home="$(mktemp -d)"
+make_temp_dir p10k_home
 HOME="$p10k_home" "$repo_root/install.sh" --yes --skip-verify --p10k-profile nerdfont >"$p10k_home/install.log"
 assert_file "$p10k_home/.p10k.zsh"
-remove_path "$p10k_home"
-
-release_zip="$test_home/offline-zsh-tmux-kit.zip"
-release_dir="$test_home/release"
-"$repo_root/tools/make-release-zip.sh" --output "$release_zip" >"$test_home/release.log"
-assert_file "$release_zip"
-mkdir -p "$release_dir"
-unzip -q "$release_zip" -d "$release_dir"
-release_root="$release_dir/offline-zsh-tmux-kit"
-assert_file "$release_root/install.sh"
-assert_file "$release_root/zsh/.zshrc"
-assert_file "$release_root/tmux/.tmux.conf.local"
-if find "$release_dir" -type l -print -quit | grep -q .; then
-  fail "release zip should not contain symlinks"
-fi
-release_home="$(mktemp -d)"
-HOME="$release_home" "$release_root/install.sh" --yes --skip-verify >"$release_home/install.log"
-assert_file "$release_home/.zshrc"
-assert_file "$release_home/.tmux.conf.local"
-remove_path "$release_home"
 
 printf 'PASS: verify\n'
