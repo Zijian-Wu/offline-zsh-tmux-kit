@@ -10,7 +10,7 @@ P10K_PROFILE=none
 
 usage() {
   cat <<'USAGE'
-Usage: ./install.sh [--yes] [--skip-verify] [--p10k-profile none|nerdfont]
+Usage: bash install.sh [--yes] [--skip-verify] [--p10k-profile none|nerdfont]
 
 Copy the vendored zsh/tmux environment into $HOME.
 
@@ -76,12 +76,13 @@ require_command() {
 
 check_required_commands() {
   local missing=0
+  require_command bash || missing=1
   require_command zsh || missing=1
   require_command tmux || missing=1
   require_command git || missing=1
 
   if [[ "$missing" -ne 0 ]]; then
-    printf 'Install zsh, tmux, and git first, then re-run this installer.\n' >&2
+    printf 'Install bash, zsh, tmux, and git first, then re-run this installer.\n' >&2
     exit 1
   fi
 }
@@ -116,7 +117,7 @@ run_preinstall_verify() {
 
   require_path "$REPO_ROOT/verify.sh"
   printf 'Running pre-install verification...\n'
-  "$REPO_ROOT/verify.sh"
+  bash "$REPO_ROOT/verify.sh"
 }
 
 confirm_install() {

@@ -7,7 +7,9 @@ Important local constraints:
 - This is a local-only repository unless the user explicitly asks for GitHub or
   another remote.
 - Keep the installer copy-based and offline-first.
-- `install.sh` runs `./verify.sh` before writing to the real home unless
+- Use `bash script.sh` entrypoints; do not rely on executable bits being
+  preserved by clone/copy/download workflows.
+- `install.sh` runs `bash verify.sh` before writing to the real home unless
   `--skip-verify` is passed.
 - Verification should cover the clone/copy install path and should not require
   release-zip tooling unless the distribution model changes.
