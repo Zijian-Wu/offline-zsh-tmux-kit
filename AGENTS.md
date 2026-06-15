@@ -9,6 +9,8 @@ to stay usable after a plain local clone with no network access.
   GitHub action.
 - Do not add a git remote or run `git push` without an explicit user request.
 - Keep install behavior copy-based. Do not replace it with symlinks.
+- Keep install and verification focused on plain clone/copy usage. Do not require
+  release-archive tooling unless the distribution model changes.
 - Do not install a Powerlevel10k profile by default. Default install should let
   Powerlevel10k run its first-login wizard for each machine.
 - Do not copy real secrets, tokens, hostnames, private paths, or proxy endpoints
@@ -26,8 +28,6 @@ to stay usable after a plain local clone with no network access.
 
 - `install.sh`: copy-mode installer for `$HOME`.
 - `update-vendors.sh`: networked maintainer script to refresh `vendors/`.
-- `tools/make-release-zip.sh`: builds a Windows-friendly zip with symlinks
-  expanded into regular files.
 - `zsh/.zshrc`: portable zsh config.
 - `zsh/p10k/nerdfont.zsh`: optional powerlevel10k prompt config for Nerd Font
   terminals.
@@ -61,7 +61,6 @@ Run these before claiming a change is complete:
 bash -n install.sh
 bash -n update-vendors.sh
 bash -n verify.sh
-bash -n tools/make-release-zip.sh
 zsh -n zsh/.zshrc
 zsh -n zsh/p10k/nerdfont.zsh
 find vendors -name .git -type d -print
