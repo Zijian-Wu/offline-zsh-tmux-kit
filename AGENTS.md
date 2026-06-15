@@ -9,6 +9,8 @@ to stay usable after a plain local clone with no network access.
   GitHub action.
 - Do not add a git remote or run `git push` without an explicit user request.
 - Keep install behavior copy-based. Do not replace it with symlinks.
+- Use `bash script.sh` entrypoints in docs and script-to-script calls; do not
+  require executable bits to be preserved by clone/copy/download workflows.
 - Keep install and verification focused on plain clone/copy usage. Do not require
   release-archive tooling unless the distribution model changes.
 - Do not install a Powerlevel10k profile by default. Default install should let
@@ -57,7 +59,7 @@ Examples of values that must remain placeholders:
 Run these before claiming a change is complete:
 
 ```bash
-./verify.sh
+bash verify.sh
 bash -n install.sh
 bash -n update-vendors.sh
 bash -n verify.sh
