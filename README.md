@@ -87,6 +87,9 @@ Run verification manually without touching your real home:
 ./verify.sh
 ```
 
+Verification covers the clone/copy install path. This project does not require a
+release zip build step.
+
 Refresh vendored dependencies when network access is available:
 
 ```bash
