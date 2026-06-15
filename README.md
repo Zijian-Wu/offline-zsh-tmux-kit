@@ -25,11 +25,11 @@ Install these commands before running the installer:
 ## Install
 
 ```bash
-./install.sh --yes
+bash install.sh --yes
 ```
 
-The installer runs `./verify.sh` first, then copies files into `$HOME`. It does
-not use symlinks. Existing files are moved to:
+The installer runs `bash verify.sh` first, then copies files into `$HOME`. It
+does not use symlinks. Existing files are moved to:
 
 ```text
 ~/.dotfiles-backup/YYYYmmdd-HHMMSS/
@@ -57,7 +57,7 @@ support differ.
 For terminals known to support Nerd Font symbols:
 
 ```bash
-./install.sh --yes --p10k-profile nerdfont
+bash install.sh --yes --p10k-profile nerdfont
 ```
 
 The bundled profile is `zsh/p10k/nerdfont.zsh`.
@@ -84,7 +84,7 @@ tmux source-file ~/.tmux.conf
 Run verification manually without touching your real home:
 
 ```bash
-./verify.sh
+bash verify.sh
 ```
 
 Verification covers the clone/copy install path. This project does not require a
@@ -93,7 +93,7 @@ release zip build step.
 Refresh vendored dependencies when network access is available:
 
 ```bash
-./update-vendors.sh
+bash update-vendors.sh
 ```
 
 Vendored source trees are plain directories without nested `.git` metadata.
