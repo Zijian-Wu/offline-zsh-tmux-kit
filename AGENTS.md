@@ -15,6 +15,11 @@ to stay usable after a plain local clone with no network access.
   release-archive tooling unless the distribution model changes.
 - Do not install a Powerlevel10k profile by default. Default install should let
   Powerlevel10k run its first-login wizard for each machine.
+- Keep `zsh/.zshrc` compatible with older zsh versions by using Powerlevel10k
+  only when zsh is at least 5.1 and falling back to the bundled `gnzh` theme.
+- Keep the installer creating and hardening `~/.cache/oh-my-zsh/completions/` so
+  Oh My Zsh cache/completion paths are owned by the current user or root and are
+  not group/other-writable.
 - Do not copy real secrets, tokens, hostnames, private paths, or proxy endpoints
   into tracked files.
 - Put machine-specific reminders in `zsh/.zshrc.local.example` as commented

@@ -24,7 +24,7 @@ check_required_commands() {
   local missing=0
   local command_name
 
-  for command_name in bash find git grep mktemp tmux zsh; do
+  for command_name in bash find git grep id mktemp tmux zsh; do
     require_command "$command_name" || missing=1
   done
 
@@ -79,6 +79,16 @@ assert_dir() {
   [[ -d "$path" ]] || fail "expected directory $path"
 }
 
+assert_owner_current_or_root() {
+  local path="$1"
+  local root_owned_path
+
+  [[ -O "$path" ]] && return 0
+
+  root_owned_path="$(find -H "$path" -prune -user 0 -print 2>/dev/null || true)"
+  [[ -n "$root_owned_path" ]] || fail "expected $path to be owned by the current user or root"
+}
+
 assert_no_group_or_other_writable_dirs() {
   local path="$1"
   local insecure_path
@@ -113,8 +123,25 @@ assert_dir "$test_home/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
 assert_dir "$test_home/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 assert_no_group_or_other_writable_dirs "$test_home/.oh-my-zsh/custom"
 
+assert_dir "$test_home/.cache"
+assert_dir "$test_home/.cache/oh-my-zsh"
+assert_dir "$test_home/.cache/oh-my-zsh/completions"
+assert_owner_current_or_root "$test_home/.cache"
+assert_owner_current_or_root "$test_home/.cache/oh-my-zsh"
+assert_owner_current_or_root "$test_home/.cache/oh-my-zsh/completions"
+assert_no_group_or_other_writable_dirs "$test_home/.cache"
+
 grep -q 'ZSH_THEME="powerlevel10k/powerlevel10k"' "$test_home/.zshrc" ||
   fail "installed .zshrc does not enable powerlevel10k"
+
+grep -q 'ZSH_THEME="gnzh"' "$test_home/.zshrc" ||
+  fail "installed .zshrc does not include the zsh<5.1 gnzh fallback theme"
+
+grep -q 'is-at-least 5.1' "$test_home/.zshrc" ||
+  fail "installed .zshrc does not check the Powerlevel10k zsh version requirement"
+
+grep -q 'ZSH_CACHE_DIR="${ZSH_CACHE_DIR:-$HOME/.cache/oh-my-zsh}"' "$test_home/.zshrc" ||
+  fail "installed .zshrc does not set the Oh My Zsh cache directory"
 
 grep -q 'zsh-autosuggestions' "$test_home/.zshrc" ||
   fail "installed .zshrc does not enable zsh-autosuggestions"
