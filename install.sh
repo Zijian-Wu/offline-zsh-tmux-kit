@@ -7,6 +7,8 @@ BACKUP_DIR="$INSTALL_HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 ASSUME_YES=false
 SKIP_VERIFY=false
 P10K_PROFILE=none
+OH_MY_ZSH_CACHE_DIR="$INSTALL_HOME/.cache/oh-my-zsh"
+OH_MY_ZSH_COMPLETIONS_DIR="$OH_MY_ZSH_CACHE_DIR/completions"
 
 usage() {
   cat <<'USAGE'
@@ -80,9 +82,11 @@ check_required_commands() {
   require_command zsh || missing=1
   require_command tmux || missing=1
   require_command git || missing=1
+  require_command find || missing=1
+  require_command id || missing=1
 
   if [[ "$missing" -ne 0 ]]; then
-    printf 'Install bash, zsh, tmux, and git first, then re-run this installer.\n' >&2
+    printf 'Install bash, zsh, tmux, git, and standard POSIX utilities first, then re-run this installer.\n' >&2
     exit 1
   fi
 }
@@ -97,6 +101,7 @@ require_path() {
 
 check_repository_payload() {
   require_path "$REPO_ROOT/vendors/oh-my-zsh/oh-my-zsh.sh"
+  require_path "$REPO_ROOT/vendors/oh-my-zsh/themes/gnzh.zsh-theme"
   require_path "$REPO_ROOT/vendors/powerlevel10k/powerlevel10k.zsh-theme"
   require_path "$REPO_ROOT/vendors/zsh-autosuggestions/zsh-autosuggestions.zsh"
   require_path "$REPO_ROOT/vendors/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
@@ -191,6 +196,79 @@ harden_oh_my_zsh_directories() {
   printf 'Hardened Oh My Zsh directory permissions under %s\n' "$zsh_dir"
 }
 
+directory_has_group_or_other_write() {
+  local path="$1"
+  local insecure_path
+
+  insecure_path="$(find -H "$path" -prune -type d -perm /022 -print 2>/dev/null || true)"
+  if [[ -z "$insecure_path" ]]; then
+    insecure_path="$(find -H "$path" -prune -type d -perm +022 -print 2>/dev/null || true)"
+  fi
+
+  [[ -n "$insecure_path" ]]
+}
+
+directory_owner_is_current_or_root() {
+  local path="$1"
+  local root_owned_path
+
+  [[ -O "$path" ]] && return 0
+
+  root_owned_path="$(find -H "$path" -prune -user 0 -print 2>/dev/null || true)"
+  [[ -n "$root_owned_path" ]]
+}
+
+fix_directory_owner() {
+  local path="$1"
+
+  if directory_owner_is_current_or_root "$path"; then
+    return 0
+  fi
+
+  if chown "$(id -u):$(id -g)" "$path" 2>/dev/null && directory_owner_is_current_or_root "$path"; then
+    printf 'Fixed owner for %s\n' "$path"
+    return 0
+  fi
+
+  printf 'Cannot secure %s: owner must be the current user or root.\n' "$path" >&2
+  printf 'Fix it manually, for example: sudo chown "%s:%s" "%s"\n' "$(id -u)" "$(id -g)" "$path" >&2
+  exit 1
+}
+
+harden_single_directory_permissions() {
+  local path="$1"
+
+  if directory_has_group_or_other_write "$path"; then
+    if ! chmod go-w "$path" 2>/dev/null; then
+      printf 'Cannot remove group/other write permission from %s.\n' "$path" >&2
+      exit 1
+    fi
+  fi
+
+  if directory_has_group_or_other_write "$path"; then
+    printf 'Directory is still group/other-writable after hardening: %s\n' "$path" >&2
+    exit 1
+  fi
+}
+
+ensure_secure_directory() {
+  local path="$1"
+
+  mkdir -p "$path"
+  fix_directory_owner "$path"
+  harden_single_directory_permissions "$path"
+}
+
+ensure_oh_my_zsh_completion_cache() {
+  local dir
+
+  for dir in "$INSTALL_HOME/.cache" "$OH_MY_ZSH_CACHE_DIR" "$OH_MY_ZSH_COMPLETIONS_DIR"; do
+    ensure_secure_directory "$dir"
+  done
+
+  printf 'Prepared Oh My Zsh completions cache at %s\n' "$OH_MY_ZSH_COMPLETIONS_DIR"
+}
+
 install_oh_my_zsh() {
   copy_dir "$REPO_ROOT/vendors/oh-my-zsh" "$INSTALL_HOME/.oh-my-zsh"
   mkdir -p "$INSTALL_HOME/.oh-my-zsh/custom/themes"
@@ -199,6 +277,7 @@ install_oh_my_zsh() {
   copy_dir "$REPO_ROOT/vendors/zsh-autosuggestions" "$INSTALL_HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
   copy_dir "$REPO_ROOT/vendors/zsh-syntax-highlighting" "$INSTALL_HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
   harden_oh_my_zsh_directories
+  ensure_oh_my_zsh_completion_cache
 }
 
 install_tmux() {
