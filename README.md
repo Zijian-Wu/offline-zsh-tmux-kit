@@ -22,6 +22,9 @@ Install these commands before running the installer:
 - `tmux`
 - `git`
 
+Powerlevel10k is used only when the runtime Zsh version is at least 5.1. Older
+Zsh versions automatically use the bundled `gnzh` Oh My Zsh theme.
+
 ## Install
 
 ```bash
@@ -41,18 +44,25 @@ Installed paths:
 ~/.zshrc
 ~/.zshrc.local
 ~/.oh-my-zsh/
+~/.cache/oh-my-zsh/completions/
 ~/.tmux.conf
 ~/.tmux.conf.local
 ```
 
 After installing Oh My Zsh, directory permissions are hardened to avoid
 `compaudit` warnings in Docker, root, or group-writable `umask` environments.
+The installer also creates `~/.cache/oh-my-zsh/completions/` and ensures
+`~/.cache`, `~/.cache/oh-my-zsh`, and the completions directory are owned by the
+current user or root and are not group/other-writable.
 
 ## Powerlevel10k
 
 By default, the installer does not create `~/.p10k.zsh`. Powerlevel10k can run
 its first-login wizard on each machine, which is safer when font and Unicode
 support differ.
+
+If `zsh` is older than 5.1, `~/.zshrc` skips Powerlevel10k and uses the bundled
+`gnzh` theme instead.
 
 For terminals known to support Nerd Font symbols:
 
