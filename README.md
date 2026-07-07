@@ -107,3 +107,11 @@ bash update-vendors.sh
 ```
 
 Vendored source trees are plain directories without nested `.git` metadata.
+
+## Default shell
+
+Make it your default shell: `chsh -s $(which zsh)`.
+
+## Local user setup for Node.js/npm
+
+See `local_npm.md` for details.
