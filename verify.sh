@@ -113,6 +113,14 @@ assert_file "$test_home/.zshrc.local"
 assert_file "$test_home/.tmux.conf"
 assert_file "$test_home/.tmux.conf.local"
 
+expected_zsh_path="$(type -P zsh)"
+grep -Fqx "set -g default-shell '$expected_zsh_path'" "$test_home/.tmux.conf.local" ||
+  fail "installed tmux config does not set default-shell to $expected_zsh_path"
+
+if grep -Fq '__OFFLINE_ZSH_TMUX_KIT_DEFAULT_SHELL__' "$test_home/.tmux.conf.local"; then
+  fail "installed tmux config still contains the default-shell template marker"
+fi
+
 if [[ -e "$test_home/.p10k.zsh" || -L "$test_home/.p10k.zsh" ]]; then
   fail "default install should let powerlevel10k configure itself, not install .p10k.zsh"
 fi
@@ -161,6 +169,13 @@ if [[ -s "$unexpected_tmux_output" ]]; then
   cat "$unexpected_tmux_output" >&2
   fail "tmux started with unexpected output"
 fi
+
+actual_zsh_path="$(
+  HOME="$test_home" TMUX_TMPDIR="$tmux_tmpdir" \
+    tmux -L "$tmux_socket" show-options -gv default-shell
+)"
+[[ "$actual_zsh_path" == "$expected_zsh_path" ]] ||
+  fail "tmux default-shell is $actual_zsh_path, expected $expected_zsh_path"
 
 make_temp_dir existing_p10k_home
 printf 'local p10k config\n' >"$existing_p10k_home/.p10k.zsh"
