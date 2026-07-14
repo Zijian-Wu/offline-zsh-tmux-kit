@@ -373,6 +373,11 @@ tmux_conf_urlscan_options="--compact --dedupe"
 
 # -- user customizations -------------------------------------------------------
 
+# install.sh replaces the marker below with:
+#   set -g default-shell '/absolute/path/to/zsh'
+# The absolute path is resolved on the target machine at install time.
+# __OFFLINE_ZSH_TMUX_KIT_DEFAULT_SHELL__
+
 # this is the place to override or undo settings
 
 # increase history size

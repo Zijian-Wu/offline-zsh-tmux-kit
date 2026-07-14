@@ -76,6 +76,26 @@ require_command() {
   fi
 }
 
+resolve_zsh_executable() {
+  local zsh_path
+
+  # type -P ignores aliases and functions and returns an executable found in PATH.
+  zsh_path="$(type -P zsh || true)"
+  if [[ -z "$zsh_path" || "$zsh_path" != /* || ! -x "$zsh_path" ]]; then
+    printf 'Cannot resolve zsh to an absolute executable path from PATH.\n' >&2
+    exit 1
+  fi
+
+  case "$zsh_path" in
+    *"'"*|*$'\n'*|*$'\r'*)
+      printf 'Cannot write zsh path safely to tmux config: %s\n' "$zsh_path" >&2
+      exit 1
+      ;;
+  esac
+
+  printf '%s\n' "$zsh_path"
+}
+
 check_required_commands() {
   local missing=0
   require_command bash || missing=1
@@ -280,9 +300,45 @@ install_oh_my_zsh() {
   ensure_oh_my_zsh_completion_cache
 }
 
+install_tmux_local_config() {
+  local source="$REPO_ROOT/tmux/.tmux.conf.local"
+  local target="$INSTALL_HOME/.tmux.conf.local"
+  local zsh_path="$1"
+  local marker='# __OFFLINE_ZSH_TMUX_KIT_DEFAULT_SHELL__'
+  local line
+  local marker_count=0
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" == "$marker" ]]; then
+      marker_count=$((marker_count + 1))
+    fi
+  done < "$source"
+
+  if [[ "$marker_count" -ne 1 ]]; then
+    printf 'Expected exactly one tmux default-shell marker in %s, found %s.\n' \
+      "$source" "$marker_count" >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  backup_path "$target"
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" == "$marker" ]]; then
+      printf "set -g default-shell '%s'\n" "$zsh_path"
+    else
+      printf '%s\n' "$line"
+    fi
+  done < "$source" > "$target"
+
+  printf 'Installed %s with tmux default shell %s\n' "$target" "$zsh_path"
+}
+
 install_tmux() {
+  local zsh_path="$1"
+
   copy_file "$REPO_ROOT/vendors/oh-my-tmux/.tmux.conf" "$INSTALL_HOME/.tmux.conf"
-  copy_file "$REPO_ROOT/tmux/.tmux.conf.local" "$INSTALL_HOME/.tmux.conf.local"
+  install_tmux_local_config "$zsh_path"
 }
 
 install_zsh_config() {
@@ -306,12 +362,15 @@ install_zsh_config() {
 }
 
 main() {
+  local zsh_executable
+
   check_required_commands
+  zsh_executable="$(resolve_zsh_executable)"
   check_repository_payload
   run_preinstall_verify
   confirm_install
   install_oh_my_zsh
-  install_tmux
+  install_tmux "$zsh_executable"
   install_zsh_config
 
   cat <<EOF
