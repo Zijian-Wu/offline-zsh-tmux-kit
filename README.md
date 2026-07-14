@@ -83,10 +83,33 @@ paths, tokens, and proxy endpoints out of tracked files.
 The main tmux config comes from Oh my tmux. Local overrides live in
 `tmux/.tmux.conf.local`.
 
+During installation, `install.sh` resolves the actual zsh executable on the
+target machine and renders an absolute path into `~/.tmux.conf.local`, for
+example:
+
+```tmux
+set -g default-shell '/usr/bin/zsh'
+```
+
+This works across common Linux, Homebrew, and other installations where zsh may
+live in different directories. Do not use `set -g default-shell $(which zsh)`
+in a tmux config: tmux does not reliably evaluate shell-style `$(...)`
+substitution there, and `which` can be affected by aliases or a different
+`PATH`. The installer uses Bash's executable-only lookup and validates that
+the result is an absolute executable path.
+
 Reload an existing tmux server after installation:
 
 ```bash
 tmux source-file ~/.tmux.conf
+```
+
+The change applies to panes and windows created after the reload. Existing panes
+keep their current shell. Verify the configured value with:
+
+```bash
+tmux show-options -gv default-shell
+type -P zsh
 ```
 
 ## Maintenance
@@ -110,7 +133,14 @@ Vendored source trees are plain directories without nested `.git` metadata.
 
 ## Default shell
 
-Make it your default shell: `chsh -s $(which zsh)`.
+The installer configures zsh as tmux's default shell without changing your
+account login shell. To also make zsh your login shell, run:
+
+```bash
+chsh -s "$(command -v zsh)"
+```
+
+The path may need to be listed in `/etc/shells` for `chsh` to accept it.
 
 ## Local user setup for Node.js/npm
 
