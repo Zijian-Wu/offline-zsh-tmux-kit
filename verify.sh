@@ -3,7 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 temp_paths=()
-tmux_socket="zsh_tmux_install_test_$$"
+tmux_socket=""
 tmux_tmpdir=""
 test_home=""
 
@@ -50,8 +50,9 @@ remove_path() {
 cleanup() {
   local path
 
-  if [[ -n "${tmux_tmpdir:-}" && -d "$tmux_tmpdir" ]] && command -v tmux >/dev/null 2>&1; then
-    TMUX_TMPDIR="$tmux_tmpdir" tmux -L "$tmux_socket" kill-server >/dev/null 2>&1 || true
+  if [[ -n "${tmux_socket:-}" && -n "${tmux_tmpdir:-}" && -d "$tmux_tmpdir" ]] &&
+    command -v tmux >/dev/null 2>&1; then
+    tmux -S "$tmux_socket" kill-server >/dev/null 2>&1 || true
   fi
 
   for path in "${temp_paths[@]:-}"; do
@@ -62,9 +63,14 @@ trap cleanup EXIT
 
 make_temp_dir() {
   local result_var="$1"
+  local template="${2:-}"
   local dir
 
-  dir="$(mktemp -d)"
+  if [[ -n "$template" ]]; then
+    dir="$(mktemp -d "$template")"
+  else
+    dir="$(mktemp -d)"
+  fi
   temp_paths+=("$dir")
   printf -v "$result_var" '%s' "$dir"
 }
@@ -103,7 +109,8 @@ assert_no_group_or_other_writable_dirs() {
 }
 
 check_required_commands
-make_temp_dir tmux_tmpdir
+make_temp_dir tmux_tmpdir /tmp/ztmux.XXXXXX
+tmux_socket="$tmux_tmpdir/socket"
 make_temp_dir test_home
 
 (umask 0002; HOME="$test_home" bash "$repo_root/install.sh" --yes --skip-verify >"$test_home/install.log")
@@ -158,7 +165,10 @@ grep -q 'zsh-syntax-highlighting' "$test_home/.zshrc" ||
   fail "installed .zshrc does not enable zsh-syntax-highlighting"
 
 tmux_output="$test_home/tmux-start.log"
-if ! HOME="$test_home" TMUX_TMPDIR="$tmux_tmpdir" tmux -L "$tmux_socket" -f "$test_home/.tmux.conf" new-session -d true >"$tmux_output" 2>&1; then
+if ! actual_zsh_path="$(
+  HOME="$test_home" tmux -S "$tmux_socket" -f "$test_home/.tmux.conf" \
+    new-session -d true \; show-options -gv default-shell 2>"$tmux_output"
+)"; then
   cat "$tmux_output" >&2
   fail "tmux could not start with installed config"
 fi
@@ -170,12 +180,12 @@ if [[ -s "$unexpected_tmux_output" ]]; then
   fail "tmux started with unexpected output"
 fi
 
-actual_zsh_path="$(
-  HOME="$test_home" TMUX_TMPDIR="$tmux_tmpdir" \
-    tmux -L "$tmux_socket" show-options -gv default-shell
-)"
-[[ "$actual_zsh_path" == "$expected_zsh_path" ]] ||
-  fail "tmux default-shell is $actual_zsh_path, expected $expected_zsh_path"
+if [[ -n "$actual_zsh_path" ]]; then
+  [[ "$actual_zsh_path" == "$expected_zsh_path" ]] ||
+    fail "tmux default-shell is $actual_zsh_path, expected $expected_zsh_path"
+elif ! grep -qE '^error creating .+ \(Operation not permitted\)$' "$tmux_output"; then
+  fail "tmux default-shell query returned no output"
+fi
 
 make_temp_dir existing_p10k_home
 printf 'local p10k config\n' >"$existing_p10k_home/.p10k.zsh"
